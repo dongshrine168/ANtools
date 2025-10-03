@@ -1,0 +1,41 @@
+// 为选定骨骼创建控制器并对齐到关节角度
+// 作者：AI助手
+// 功能：创建控制器并让控制器组对齐到关节的旋转角度
+
+string $selectedJoints[] = `ls -sl`;
+
+if (size($selectedJoints) == 0) {
+    warning "请先选择一个或多个关节！";
+} else {
+    for ($jointName in $selectedJoints) {
+        string $controllerName = $jointName + "_Ctrl";
+        
+        // 创建控制器
+        string $controller[] = `circle -n $controllerName`;
+        
+        // 删除控制器的历史记录和冻结变换
+        DeleteHistory $controller[0];
+        makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 $controller[0];
+        
+        // 创建控制器组
+        string $controllerGrp = `group -em -name ($controllerName + "_Grp")`;
+        
+        // 获取关节位置（世界空间）
+        float $jointPosition[] = `xform -q -ws -rp $jointName`;
+        
+        // 获取关节旋转（世界空间）
+        float $jointRotation[] = `xform -q -ws -ro $jointName`;
+        
+        // 将控制器放入组中
+        parent $controller[0] $controllerGrp;
+        
+        // 将控制器组移动到关节位置
+        move $jointPosition[0] $jointPosition[1] $jointPosition[2] $controllerGrp;
+        
+        // 将控制器组旋转到关节的角度
+        rotate $jointRotation[0] $jointRotation[1] $jointRotation[2] $controllerGrp;
+    }
+    
+    // 选择所有控制器
+    select -r `ls -type transform "*_Ctrl"`;
+}
