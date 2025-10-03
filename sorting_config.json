@@ -1,0 +1,44 @@
+{
+  "version": "1.0",
+  "description": "Maya工具架排序配置",
+  "sorting_rules": {
+    "by_category": true,
+    "by_priority": true,
+    "by_name": true,
+    "custom_order": true
+  },
+  "category_order": [
+    "Rigging",
+    "Modeling", 
+    "Animation",
+    "Rendering",
+    "Utilities",
+    "Custom"
+  ],
+  "priority_levels": {
+    "high": 1,
+    "medium": 2,
+    "low": 3,
+    "default": 2
+  },
+  "tool_priorities": {
+    "关节控制器对齐": "high",
+    "模型移动器": "high",
+    "文字曲线合并": "medium",
+    "关键帧偏移": "medium"
+  },
+  "custom_order": [
+    "关节控制器对齐",
+    "模型移动器", 
+    "文字曲线合并",
+    "关键帧偏移"
+  ],
+  "category_colors": {
+    "Rigging": [0.2, 0.6, 0.8],
+    "Modeling": [0.8, 0.6, 0.2],
+    "Animation": [0.6, 0.8, 0.2],
+    "Rendering": [0.8, 0.2, 0.6],
+    "Utilities": [0.6, 0.6, 0.6],
+    "Custom": [0.5, 0.5, 0.5]
+  }
+}

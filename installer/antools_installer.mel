@@ -1,0 +1,55 @@
+// ANtools 本地安装脚本 (MEL) - 修复版
+// 功能：创建ANtools工具架
+// 作者：AI代码老师
+// 版本：1.1
+
+global proc installANTools()
+{
+    print("开始安装ANtools工具架...\n");
+    
+    string $shelfName = "ANtools";
+    
+    // 删除已存在的工具架
+    if (`shelfLayout -exists $shelfName`) {
+        deleteUI $shelfName;
+        print("删除旧工具架: " + $shelfName + "\n");
+    }
+    
+    // 创建新工具架
+    shelfLayout $shelfName;
+    print("创建工具架: " + $shelfName + "\n");
+    
+    // 添加工具按钮
+    addToolButton($shelfName, "Joint Controller", "joint_controller_aligned.mel", "为选定骨骼创建控制器并对齐到关节角度");
+    addToolButton($shelfName, "Model Mover", "maya_model_mover.py", "批量对齐模型位置");
+    addToolButton($shelfName, "Curve Merger", "text_curves_merger.py", "合并选中的文字曲线");
+    
+    print("ANtools安装完成！\n");
+}
+
+global proc addToolButton(string $shelfName, string $label, string $commandFile, string $annotation)
+{
+    string $userScriptDir = `internalVar -userScriptDir`;
+    
+    // 构建命令
+    string $command = "";
+    if (`gmatch $commandFile "*.py"`) {
+        $command = "python(\"exec(open(r'" + $userScriptDir + $commandFile + "').read())\");";
+    } else if (`gmatch $commandFile "*.mel"`) {
+        $command = "source \"" + $userScriptDir + $commandFile + "\";";
+    }
+    
+    // 添加按钮到工具架
+    shelfButton 
+        -parent $shelfName
+        -label $label
+        -command $command
+        -annotation $annotation
+        -width 35
+        -height 35;
+    
+    print("添加工具: " + $label + "\n");
+}
+
+// 运行安装器
+installANTools();

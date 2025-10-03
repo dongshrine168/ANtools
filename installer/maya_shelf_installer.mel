@@ -1,0 +1,224 @@
+// Maya工具架云端安装器 (MEL版本)
+// 功能：从GitHub自动下载并安装Maya工具架
+// 作者：AI代码老师
+// 版本：1.0
+
+global proc mayaShelfInstaller()
+{
+    // 获取Maya版本和路径
+    string $mayaVersion = `about -version`;
+    string $userScriptDir = `internalVar -userScriptDir`;
+    string $shelfDir = $userScriptDir + "shelf";
+    string $iconDir = $userScriptDir + "icons";
+    
+    print("🚀 开始安装Maya工具架...\n");
+    print("Maya版本: " + $mayaVersion + "\n");
+    print("脚本目录: " + $userScriptDir + "\n");
+    
+    // 创建必要目录
+    if (!`filetest -d $shelfDir`) {
+        sysFile -makeDir $shelfDir;
+        print("✅ 创建工具架目录: " + $shelfDir + "\n");
+    }
+    
+    if (!`filetest -d $iconDir`) {
+        sysFile -makeDir $iconDir;
+        print("✅ 创建图标目录: " + $iconDir + "\n");
+    }
+    
+    // 显示安装选项对话框
+    string $result = `confirmDialog 
+        -title "Maya工具架安装器"
+        -message "请选择安装方式:\n\n1. 从GitHub下载安装\n2. 从本地文件安装\n3. 仅创建工具架结构"
+        -button "GitHub安装" "本地安装" "创建结构" "取消"
+        -defaultButton "GitHub安装"
+        -cancelButton "取消"
+        -dismissString "取消"`;
+    
+    if ($result == "GitHub安装") {
+        installFromGitHub();
+    } else if ($result == "本地安装") {
+        installFromLocal();
+    } else if ($result == "创建结构") {
+        createShelfStructure();
+    } else {
+        print("❌ 安装已取消\n");
+        return;
+    }
+}
+
+global proc installFromGitHub()
+{
+    print("📥 从GitHub安装工具架...\n");
+    
+    // 获取GitHub仓库地址
+    string $repoUrl = `promptDialog 
+        -title "GitHub仓库地址"
+        -message "请输入GitHub仓库地址:"
+        -button "确定" "取消"
+        -defaultButton "确定"
+        -cancelButton "取消"
+        -text "你的用户名/maya-shelf-tools"`;
+    
+    if ($repoUrl == "") {
+        print("❌ 未输入仓库地址\n");
+        return;
+    }
+    
+    // 这里需要Python脚本来处理下载
+    // 调用Python安装器
+    python("exec(open(r'maya_shelf_installer.py').read())");
+}
+
+global proc installFromLocal()
+{
+    print("📁 从本地文件安装工具架...\n");
+    
+    // 选择本地文件夹
+    string $localPath = `fileDialog2 
+        -fileMode 3 
+        -caption "选择工具架文件夹"
+        -okCaption "选择"
+        -cancelCaption "取消"`;
+    
+    if (size($localPath) == 0) {
+        print("❌ 未选择文件夹\n");
+        return;
+    }
+    
+    string $sourceDir = $localPath[0];
+    string $userScriptDir = `internalVar -userScriptDir`;
+    string $iconDir = $userScriptDir + "icons";
+    
+    // 复制工具文件
+    string $toolsDir = $sourceDir + "/tools";
+    if (`filetest -d $toolsDir`) {
+        string $files[] = `getFileList -folder $toolsDir -filespec "*.py"`;
+        string $files2[] = `getFileList -folder $toolsDir -filespec "*.mel"`;
+        
+        for ($file in $files) {
+            string $sourceFile = $toolsDir + "/" + $file;
+            string $destFile = $userScriptDir + $file;
+            sysFile -copy $sourceFile $destFile;
+            print("✅ 安装工具: " + $file + "\n");
+        }
+        
+        for ($file in $files2) {
+            string $sourceFile = $toolsDir + "/" + $file;
+            string $destFile = $userScriptDir + $file;
+            sysFile -copy $sourceFile $destFile;
+            print("✅ 安装工具: " + $file + "\n");
+        }
+    }
+    
+    // 复制图标文件
+    string $iconsDir = $sourceDir + "/icons";
+    if (`filetest -d $iconsDir`) {
+        string $iconFiles[] = `getFileList -folder $iconsDir -filespec "*.png"`;
+        string $iconFiles2[] = `getFileList -folder $iconsDir -filespec "*.jpg"`;
+        
+        for ($file in $iconFiles) {
+            string $sourceFile = $iconsDir + "/" + $file;
+            string $destFile = $iconDir + "/" + $file;
+            sysFile -copy $sourceFile $destFile;
+            print("✅ 安装图标: " + $file + "\n");
+        }
+        
+        for ($file in $iconFiles2) {
+            string $sourceFile = $iconsDir + "/" + $file;
+            string $destFile = $iconDir + "/" + $file;
+            sysFile -copy $sourceFile $destFile;
+            print("✅ 安装图标: " + $file + "\n");
+        }
+    }
+    
+    // 创建工具架
+    createCustomShelf();
+    
+    print("🎉 本地安装完成！\n");
+}
+
+global proc createShelfStructure()
+{
+    print("🏗️ 创建工具架结构...\n");
+    
+    // 创建默认工具架
+    createCustomShelf();
+    
+    // 创建示例工具文件
+    createSampleTools();
+    
+    print("🎉 工具架结构创建完成！\n");
+}
+
+global proc createCustomShelf()
+{
+    string $shelfName = "Custom Tools";
+    
+    // 删除已存在的工具架
+    if (`shelfLayout -exists $shelfName`) {
+        deleteUI $shelfName;
+        print("删除旧工具架: " + $shelfName + "\n");
+    }
+    
+    // 创建新工具架
+    shelfLayout $shelfName;
+    print("创建工具架: " + $shelfName + "\n");
+    
+    // 添加工具按钮
+    addToolButton($shelfName, "关节控制器对齐", "joint_controller_aligned.mel", "joint_controller.png", "为选定骨骼创建控制器并对齐到关节角度");
+    addToolButton($shelfName, "模型移动器", "maya_model_mover.py", "model_mover.png", "批量对齐模型位置");
+    addToolButton($shelfName, "文字曲线合并", "text_curves_merger.py", "curve_merger.png", "合并选中的文字曲线");
+    addToolButton($shelfName, "关键帧偏移", "kfSwordSwipe - cn - 能够修改颜色+布局优化+环境光设置.mel", "keyframe_offset.png", "关键帧偏移工具");
+}
+
+global proc addToolButton(string $shelfName, string $label, string $commandFile, string $iconFile, string $annotation)
+{
+    string $userScriptDir = `internalVar -userScriptDir`;
+    string $iconDir = $userScriptDir + "icons";
+    string $iconPath = $iconDir + "/" + $iconFile;
+    
+    // 检查图标文件是否存在
+    if (!`filetest -e $iconPath`) {
+        $iconPath = "";
+        print("⚠️ 图标文件不存在: " + $iconFile + "\n");
+    }
+    
+    // 构建命令
+    string $command = "";
+    if (`gmatch $commandFile "*.py"`) {
+        $command = "python(\"exec(open(r'" + $userScriptDir + $commandFile + "').read())\");";
+    } else if (`gmatch $commandFile "*.mel"`) {
+        $command = "source \"" + $userScriptDir + $commandFile + "\";";
+    }
+    
+    // 添加按钮到工具架
+    shelfButton 
+        -parent $shelfName
+        -label $label
+        -command $command
+        -image $iconPath
+        -annotation $annotation
+        -width 35
+        -height 35;
+    
+    print("添加工具: " + $label + "\n");
+}
+
+global proc createSampleTools()
+{
+    string $userScriptDir = `internalVar -userScriptDir`;
+    
+    // 创建示例MEL脚本
+    string $melFile = $userScriptDir + "sample_tool.mel";
+    string $melContent = "// Sample tool script\nprint(\"This is a sample tool!\");";
+    
+    int $fileId = `fopen $melFile "w"`;
+    fprint $fileId $melContent;
+    fclose $fileId;
+    
+    print("创建示例工具: sample_tool.mel\n");
+}
+
+// 运行安装器
+mayaShelfInstaller();
